@@ -1,29 +1,77 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, PlayCircle, Lock, Star, Clock, FileText, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, PlayCircle, Lock, Star, Clock, FileText, CheckCircle, Loader } from 'lucide-react';
+import { getCourse, enrollCourse } from '../services/api';
 
 const CourseDetails = () => {
-  // Use courseId later when fetching data
-  // const { courseId } = useParams();
+  const { courseId } = useParams();
+  const navigate = useNavigate();
+  
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState(false);
 
-  // Mock course data matching ID 1
-  const course = {
-    title: 'Advanced UI/UX Design with Figma',
-    description: 'Master the art of creating beautiful, user-centric interfaces. Learn advanced prototyping, design systems, and component architecture with real-world projects.',
-    instructor: 'Sarah Jenkins',
-    rating: 4.8,
-    students: '24,593',
-    duration: '12h 30m',
-    lessons: 42,
-    image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80',
-    curriculum: [
-      { section: 'Introduction to Figma Design Systems', duration: '45m', completed: true },
-      { section: 'Advanced Autolayout Techniques', duration: '1h 20m', completed: true },
-      { section: 'Component Architecture Deep Dive', duration: '2h 15m', completed: false },
-      { section: 'Interactive Prototyping Masterclass', duration: '3h 30m', completed: false, locked: true },
-      { section: 'Developer Handoff Best Practices', duration: '1h 0m', completed: false, locked: true },
-    ]
+  useEffect(() => {
+    const fetchCourseDetails = async () => {
+      try {
+        const data = await getCourse(courseId);
+        // Map backend data + add some static decorative data for UI
+        setCourse({
+          id: data.id,
+          title: data.title,
+          description: data.description,
+          price: data.price,
+          image: data.image || 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80',
+          instructor: data.mentor ? data.mentor.name : 'Unknown Instructor',
+          rating: 4.8,
+          students: '24,593',
+          duration: '12h 30m',
+          lessons: 42,
+          curriculum: [
+            { section: 'Introduction to Core Concepts', duration: '45m', completed: true },
+            { section: 'Advanced Techniques', duration: '1h 20m', completed: true },
+            { section: 'Architecture Deep Dive', duration: '2h 15m', completed: false },
+            { section: 'Interactive Masterclass', duration: '3h 30m', completed: false, locked: true },
+            { section: 'Best Practices', duration: '1h 0m', completed: false, locked: true },
+          ]
+        });
+      } catch (err) {
+        console.error("Failed to load course details", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (courseId) {
+      fetchCourseDetails();
+    }
+  }, [courseId]);
+
+  const handleEnroll = async () => {
+    try {
+      setEnrolling(true);
+      // Hardcoded student logic: We assume userId=1 is logged in for testing integration
+      const MOCK_USER_ID = 1; 
+      await enrollCourse(MOCK_USER_ID, course.id);
+      navigate('/my-courses');
+    } catch (err) {
+      console.error("Failed to enroll in course", err);
+      alert("Error enrolling in course");
+    } finally {
+      setEnrolling(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader className="w-10 h-10 text-indigo-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!course) {
+    return <div className="text-center py-12 text-slate-400">Course not found.</div>;
+  }
 
   return (
     <div className="pb-16">
@@ -49,7 +97,7 @@ const CourseDetails = () => {
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
           <div className="flex items-center gap-3 mb-3">
              <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md">
-               In Progress
+               {course.price === 0 ? 'Free' : `$${course.price}`}
              </span>
              <span className="flex items-center gap-1 text-slate-300 text-sm font-medium">
                <Star className="w-4 h-4 text-amber-400 fill-current" /> {course.rating}
@@ -61,6 +109,16 @@ const CourseDetails = () => {
           <p className="text-slate-300 max-w-2xl text-lg drop-shadow line-clamp-2 md:line-clamp-none">
             {course.description}
           </p>
+          <div className="mt-6">
+            <button 
+              onClick={handleEnroll} 
+              disabled={enrolling}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-indigo-500/30 transition-all active:scale-95 disabled:opacity-70 flex items-center gap-2"
+            >
+              {enrolling ? <Loader className="w-5 h-5 animate-spin" /> : null}
+              {enrolling ? 'Enrolling...' : 'Enroll Now'}
+            </button>
+          </div>
         </div>
       </div>
 

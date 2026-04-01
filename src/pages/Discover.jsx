@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Search, Filter, Sparkles, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, Sparkles, TrendingUp, Loader } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
 import CourseCard from '../components/dashboard/CourseCard';
+import { getCourses } from '../services/api';
 
 // Extrapolated dummy courses for discovery
 const DISCOVER_COURSES = [
@@ -16,10 +18,58 @@ const CATEGORIES = ['All', 'Development', 'Design', 'Business', 'Marketing', 'Da
 
 const Discover = () => {
   const [activeCategory, setActiveCategory] = useState('All');
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get('q') || '';
+  
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredCourses = activeCategory === 'All' 
-    ? DISCOVER_COURSES 
-    : DISCOVER_COURSES.filter(c => c.category === activeCategory);
+  useEffect(() => {
+    const fetchAndSetCourses = async () => {
+      setLoading(true);
+      try {
+        const apiCourses = await getCourses();
+        const formattedApiCourses = apiCourses.map(course => ({
+          ...course,
+          category: course.category ? course.category.name : 'Uncategorized',
+          instructor: course.mentor ? course.mentor.name : 'Unknown',
+          instructorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&w=100&q=80',
+          rating: 4.8,
+          reviews: '1k+',
+          duration: '10h 30m'
+        }));
+        const baseCourses = formattedApiCourses.length > 0 ? formattedApiCourses : DISCOVER_COURSES;
+        
+        let filtered = baseCourses;
+        if (activeCategory !== 'All') {
+          filtered = filtered.filter(c => c.category === activeCategory);
+        }
+        if (query) {
+          filtered = filtered.filter(c => 
+            (c.title && c.title.toLowerCase().includes(query.toLowerCase())) || 
+            (c.instructor && c.instructor.toLowerCase().includes(query.toLowerCase())) ||
+            (c.category && c.category.toLowerCase().includes(query.toLowerCase()))
+          );
+        }
+        setCourses(filtered);
+      } catch (err) {
+        console.error(err);
+        // Fallback filtering on static courses if API fails
+        let filtered = DISCOVER_COURSES;
+        if (activeCategory !== 'All') filtered = filtered.filter(c => c.category === activeCategory);
+        if (query) {
+          filtered = filtered.filter(c => 
+            (c.title && c.title.toLowerCase().includes(query.toLowerCase())) || 
+            (c.instructor && c.instructor.toLowerCase().includes(query.toLowerCase()))
+          );
+        }
+        setCourses(filtered);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAndSetCourses();
+  }, [activeCategory, query]);
 
   return (
     <div className="pb-12">
@@ -60,9 +110,9 @@ const Discover = () => {
             Learn how to design, build, and deploy immersive AR and VR applications for the next generation of headsets.
           </p>
           <div className="flex items-center gap-4">
-            <button className="bg-white text-indigo-950 font-bold px-6 py-3 rounded-xl hover:bg-indigo-50 transition-colors">
-              Enroll Now - $49
-            </button>
+            <Link to="/course/103" className="bg-white text-indigo-950 font-bold px-6 py-3 rounded-xl hover:bg-indigo-50 transition-colors">
+              View Course
+            </Link>
           </div>
         </div>
         <div className="md:w-1/2 relative h-64 md:h-auto overflow-hidden">
@@ -99,9 +149,19 @@ const Discover = () => {
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredCourses.map((course) => (
-          <CourseCard key={course.id} course={course} />
-        ))}
+        {loading ? (
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 flex justify-center py-20">
+            <Loader className="w-8 h-8 text-indigo-500 animate-spin" />
+          </div>
+        ) : courses.length > 0 ? (
+          courses.map((course) => (
+            <CourseCard key={course.id || Math.random()} course={course} />
+          ))
+        ) : (
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-center py-12 text-slate-400">
+            No courses found matching your criteria.
+          </div>
+        )}
       </div>
     </div>
   );

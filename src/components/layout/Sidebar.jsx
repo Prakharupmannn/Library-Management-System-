@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutDashboard, BookOpen, MessageSquare, Settings, Award, Compass, LogOut } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 
 const Sidebar = ({ isOpen, setOpen }) => {
   const navItems = [
@@ -79,9 +79,9 @@ const Sidebar = ({ isOpen, setOpen }) => {
                 <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/20 rounded-full blur-xl"></div>
                 <h4 className="text-sm font-semibold text-white mb-1 relative z-10">Go Premium</h4>
                 <p className="text-xs text-slate-400 mb-3 relative z-10 font-medium">Unlock full access to all 500+ courses</p>
-                <button className="w-full bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-semibold py-2 rounded-lg transition-colors relative z-10 shadow-[0_0_15px_rgba(99,102,241,0.4)] hover:shadow-[0_0_20px_rgba(99,102,241,0.6)]">
+                <Link to="/upgrade" onClick={() => setOpen && setOpen(false)} className="block text-center w-full bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-semibold py-2 rounded-lg transition-colors relative z-10 shadow-[0_0_15px_rgba(99,102,241,0.4)] hover:shadow-[0_0_20px_rgba(99,102,241,0.6)]">
                   Upgrade Now
-                </button>
+                </Link>
              </div>
 
             <nav className="space-y-1 border-t border-white/5 pt-4">

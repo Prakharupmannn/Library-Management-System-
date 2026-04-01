@@ -10,6 +10,7 @@ import Upgrade from './pages/Upgrade';
 import Logout from './pages/Logout';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
+import Messages from './pages/Messages';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="discover" element={<Discover />} />
           <Route path="my-courses" element={<MyCourses />} />
           <Route path="achievements" element={<Achievements />} />
+          <Route path="messages" element={<Messages />} />
           <Route path="course/:courseId" element={<CourseDetails />} />
           <Route path="settings" element={<Settings />} />
           <Route path="profile" element={<Profile />} />

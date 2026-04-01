@@ -1,41 +1,40 @@
-import React from 'react';
-import { PlayCircle, Award, Clock, BookOpen, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { PlayCircle, Award, Clock, BookOpen, CheckCircle, Loader } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const ENROLLED_COURSES = [
-  {
-    id: 1,
-    title: 'Advanced UI/UX Design with Figma',
-    progress: 68,
-    totalModules: 12,
-    completedModules: 8,
-    nextLesson: 'Component Architecture Deep Dive',
-    image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    lastAccessed: '2 hours ago'
-  },
-  {
-    id: 3,
-    title: 'Data Science Fundamentals in Python',
-    progress: 100,
-    totalModules: 8,
-    completedModules: 8,
-    nextLesson: 'Completed',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    lastAccessed: '3 days ago'
-  },
-  {
-    id: 5,
-    title: 'Modern Front-End Architectures',
-    progress: 12,
-    totalModules: 20,
-    completedModules: 2,
-    nextLesson: 'State Management with Redux Toolkit',
-    image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    lastAccessed: 'Just now'
-  }
-];
+import { getUserEnrollments } from '../services/api';
 
 const MyCourses = () => {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEnrollments = async () => {
+      try {
+        const MOCK_USER_ID = 1;
+        const data = await getUserEnrollments(MOCK_USER_ID);
+        
+        const mapped = data.map(enr => ({
+          id: enr.course.id,
+          title: enr.course.title || 'Untitled Course',
+          progress: Math.floor(Math.random() * 60) + 5,
+          totalModules: 12,
+          completedModules: Math.floor(Math.random() * 5) + 1,
+          nextLesson: 'Continuing Core Concepts',
+          image: enr.course.image || 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&w=400&q=80',
+          lastAccessed: enr.enrolledAt ? new Date(enr.enrolledAt).toLocaleDateString() : 'Just now'
+        }));
+        
+        setCourses(mapped);
+      } catch (err) {
+        console.error("Failed to fetch enrollments", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchEnrollments();
+  }, []);
+
   return (
     <div className="pb-12">
       <div className="mb-8 border-b border-white/10 pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -50,7 +49,12 @@ const MyCourses = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {ENROLLED_COURSES.map((course) => (
+        {loading ? (
+          <div className="col-span-1 xl:col-span-2 flex justify-center py-20">
+            <Loader className="w-10 h-10 text-indigo-500 animate-spin" />
+          </div>
+        ) : courses.length > 0 ? (
+          courses.map((course) => (
           <Link 
             to={`/course/${course.id}`} 
             key={course.id}
@@ -119,7 +123,16 @@ const MyCourses = () => {
               </div>
             </div>
           </Link>
-        ))}
+        ))
+      ) : (
+        <div className="col-span-1 xl:col-span-2 text-center py-16 bg-slate-900/40 rounded-2xl border border-white/5">
+          <h3 className="text-xl font-bold text-white mb-2">You aren't enrolled in any courses</h3>
+          <p className="text-slate-400 mb-6">Discover new skills and start learning today.</p>
+          <Link to="/discover" className="inline-block bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl transition-all">
+            Browse Courses
+          </Link>
+        </div>
+      )}
       </div>
     </div>
   );

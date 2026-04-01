@@ -1,8 +1,33 @@
-import React from 'react';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Mail, Lock, ArrowRight, Loader } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { loginUser } from '../services/api';
 
 const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const token = await loginUser(email, password);
+      // Assuming backend returns a token, or handling success natively
+      if (token) {
+         localStorage.setItem('token', typeof token === 'string' ? token : JSON.stringify(token));
+      }
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen relative flex items-center justify-center bg-slate-950 overflow-hidden selection:bg-indigo-500/30">
       {/* Animated Background Elements */}
@@ -24,7 +49,8 @@ const Login = () => {
             <p className="text-sm text-slate-400">Enter your credentials to access your account</p>
           </div>
 
-          <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); window.location.href = '/'; }}>
+          <form className="space-y-5" onSubmit={handleLogin}>
+            {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">{error}</div>}
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-300 ml-1">Email Address</label>
               <div className="relative group">
@@ -34,6 +60,8 @@ const Login = () => {
                 <input
                   type="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   className="block w-full pl-10 pr-3 py-3 border border-slate-700/50 rounded-xl leading-5 bg-slate-950/50 text-slate-200 placeholder-slate-500 focus:outline-none focus:bg-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all duration-200"
                 />
@@ -52,14 +80,16 @@ const Login = () => {
                 <input
                   type="password"
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="block w-full pl-10 pr-3 py-3 border border-slate-700/50 rounded-xl leading-5 bg-slate-950/50 text-slate-200 placeholder-slate-500 focus:outline-none focus:bg-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all duration-200"
                 />
               </div>
             </div>
 
-            <button type="submit" className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white py-3 px-4 rounded-xl font-semibold shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-95">
-              Sign In <ArrowRight className="w-4 h-4" />
+            <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white py-3 px-4 rounded-xl font-semibold shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
+              {loading ? <Loader className="w-5 h-5 animate-spin"/> : <>Sign In <ArrowRight className="w-4 h-4" /></>}
             </button>
           </form>
 

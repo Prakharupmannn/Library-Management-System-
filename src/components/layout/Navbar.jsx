@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Bell, Menu } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = ({ onMenuClick }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate(`/discover?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
   return (
     <nav className="sticky top-0 z-30 w-full bg-slate-900/80 backdrop-blur-md border-b border-white/10 shadow-sm">
       <div className="flex items-center justify-between px-4 py-3 lg:px-6">
@@ -31,7 +40,10 @@ const Navbar = ({ onMenuClick }) => {
             </div>
             <input
               type="text"
-              placeholder="Search courses, skills, or mentors..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearch}
+              placeholder="Search courses, skills, or mentors (Press Enter)..."
               className="block w-full pl-10 pr-3 py-2 border border-slate-700/50 rounded-xl leading-5 bg-slate-800/80 text-slate-200 placeholder-slate-400 focus:outline-none focus:bg-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:text-sm transition-all duration-200 ease-in-out"
             />
           </div>
